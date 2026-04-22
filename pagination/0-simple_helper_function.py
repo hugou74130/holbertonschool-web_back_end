@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Module providing a helper function to calculate pagination index ranges."""
 from typing import Tuple
 
 
