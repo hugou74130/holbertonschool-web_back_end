@@ -11,7 +11,10 @@ function countStudents(path) {
         return;
       }
 
-      const lines = data.trim().split('\n').filter((line) => line.trim().length > 0);
+      const lines = data
+        .trim()
+        .split('\n')
+        .filter((line) => line.trim().length > 0);
 
       if (lines.length <= 1) {
         resolve('Number of students: 0');
@@ -32,15 +35,18 @@ function countStudents(path) {
         fields[field].push(firstName);
       });
 
-      const output = [];
-      const totalStudents = Object.values(fields).reduce((sum, names) => sum + names.length, 0);
-      output.push(`Number of students: ${totalStudents}`);
+      const totalStudents = Object.values(fields).reduce(
+        (sum, studentsByField) => sum + studentsByField.length,
+        0,
+      );
+
+      let output = `Number of students: ${totalStudents}`;
 
       Object.keys(fields).forEach((field) => {
-        output.push(`Number of students in ${field}: ${fields[field].length}. List: ${fields[field].join(', ')}`);
+        output += `\nNumber of students in ${field}: ${fields[field].length}. List: ${fields[field].join(', ')}`;
       });
 
-      resolve(output.join('\n'));
+      resolve(output);
     });
   });
 }
@@ -60,7 +66,7 @@ app.get('/students', (req, res) => {
     })
     .catch(() => {
       res.set('Content-Type', 'text/plain');
-      res.send('This is the list of our students\nCannot load the database');
+      res.status(200).send('Cannot load the database');
     });
 });
 
