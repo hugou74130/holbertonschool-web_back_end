@@ -33,7 +33,10 @@ app.get('/students', async (req, res) => {
       fields[field].push(firstName);
     });
 
-    const totalStudents = Object.values(fields).reduce((sum, studentsByField) => sum + studentsByField.length, 0);
+    const totalStudents = Object.values(fields).reduce(
+      (sum, studentsByField) => sum + studentsByField.length,
+      0,
+    );
 
     let output = 'This is the list of our students';
     output += `\nNumber of students: ${totalStudents}`;
@@ -45,8 +48,9 @@ app.get('/students', async (req, res) => {
     res.type('text/plain');
     res.status(200).send(output);
   } catch (error) {
+    const output = 'This is the list of our students\nCannot load the database';
     res.type('text/plain');
-    res.status(500).send('Cannot load the database');
+    res.status(200).send(output);
   }
 });
 
