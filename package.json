@@ -1,0 +1,7 @@
+{
+  "name": "holbertonschool-web_back_end",
+  "version": "1.0.0",
+  "dependencies": {
+    "express": "^4.22.2"
+  }
+}
