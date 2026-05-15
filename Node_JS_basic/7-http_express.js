@@ -1,57 +1,56 @@
 const express = require('express');
-const fs = require('fs').promises;
+const fs = require('fs');
 
 const app = express();
 
+function countStudents(path) {
+  return new Promise((resolve, reject) => {
+    fs.readFile(path, 'utf-8', (error, data) => {
+      if (error) {
+        reject(new Error('Cannot load the database'));
+        return;
+      }
+
+      const lines = data.split('\n').filter((line) => line.trim() !== '');
+      const students = lines.slice(1);
+      const output = [];
+
+      output.push(`Number of students: ${students.length}`);
+
+      const fields = {};
+      for (const student of students) {
+        const cols = student.split(',');
+        const firstName = cols[0];
+        const field = cols[3];
+        if (!fields[field]) {
+          fields[field] = [];
+        }
+        fields[field].push(firstName);
+      }
+
+      for (const [field, names] of Object.entries(fields)) {
+        output.push(`Number of students in ${field}: ${names.length}. List: ${names.join(', ')}`);
+      }
+
+      resolve(output.join('\n'));
+    });
+  });
+}
+
+const database = process.argv[2];
+
 app.get('/', (req, res) => {
-  res.type('text/plain');
-  res.status(200).send('Hello Holberton School!');
+  res.send('Hello Holberton School!');
 });
 
-app.get('/students', async (req, res) => {
-  const databaseFile = process.argv[2];
-
-  try {
-    const data = await fs.readFile(databaseFile, 'utf8');
-    const lines = data
-      .trim()
-      .split('\n')
-      .filter((line) => line.trim().length > 0);
-
-    const students = lines.slice(1);
-    const fields = {};
-
-    students.forEach((line) => {
-      const parts = line.split(',');
-      if (parts.length < 4) return;
-      const firstName = parts[0].trim();
-      const field = parts[3].trim();
-
-      if (!fields[field]) {
-        fields[field] = [];
-      }
-      fields[field].push(firstName);
+app.get('/students', (req, res) => {
+  countStudents(database)
+    .then((output) => {
+      res.send(`This is the list of our students\n${output}`);
+    })
+    .catch(() => {
+      res.send('This is the list of our students\nCannot load the database');
     });
-
-    const totalStudents = Object.values(fields).reduce(
-      (sum, studentsByField) => sum + studentsByField.length,
-      0,
-    );
-
-    let output = 'This is the list of our students';
-    output += `\nNumber of students: ${totalStudents}`;
-
-    Object.keys(fields).forEach((field) => {
-      output += `\nNumber of students in ${field}: ${fields[field].length}. List: ${fields[field].join(', ')}`;
-    });
-
-    res.type('text/plain');
-    res.status(200).send(output);
-  } catch (error) {
-    const output = 'This is the list of our students\nCannot load the database';
-    res.type('text/plain');
-    res.status(200).send(output);
-  }
 });
 
 app.listen(1245);
