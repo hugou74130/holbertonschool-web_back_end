@@ -4,7 +4,8 @@ const fs = require('fs').promises;
 const app = express();
 
 app.get('/', (req, res) => {
-  res.send('Hello Holberton School!');
+  res.type('text/plain');
+  res.status(200).send('Hello Holberton School!');
 });
 
 app.get('/students', async (req, res) => {
@@ -45,10 +46,10 @@ app.get('/students', async (req, res) => {
     });
 
     res.type('text/plain');
-    res.send(output);
+    res.status(200).send(output);
   } catch (err) {
     res.type('text/plain');
-    res.send('Cannot load the database');
+    res.status(500).send('Cannot load the database');
   }
 });
 
