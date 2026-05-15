@@ -1,72 +1,54 @@
 const express = require('express');
-const fs = require('fs').promises;
+const fs = require('fs');
 
-const app = express();
-const database = process.argv[2];
-
-function countStudents(path) {
-  return fs.readFile(path, 'utf8')
-    .then((data) => {
-      const lines = data
-        .trim()
-        .split('\n')
-        .filter((line) => line.trim().length > 0);
-
-      if (lines.length <= 1) {
-        return ['Number of students: 0'];
+function readDatabase(path) {
+  return new Promise((resolve, reject) => {
+    fs.readFile(path, 'utf-8', (error, data) => {
+      if (error) {
+        reject(new Error('Cannot load the database'));
+        return;
       }
 
+      const lines = data.split('\n').filter((line) => line.trim() !== '');
       const students = lines.slice(1);
       const fields = {};
 
-      students.forEach((line) => {
-        const parts = line.split(',');
-        if (parts.length < 4) return;
-        const firstName = parts[0].trim();
-        const field = parts[3].trim();
+      students.forEach((student) => {
+        const [firstName, , , field] = student.split(',');
+
         if (!fields[field]) {
           fields[field] = [];
         }
+
         fields[field].push(firstName);
       });
 
-      const output = [];
-      const totalStudents = Object.values(fields).reduce(
-        (sum, names) => sum + names.length,
-        0,
-      );
-      output.push(`Number of students: ${totalStudents}`);
+      const output = [`Number of students: ${students.length}`];
 
       Object.keys(fields).forEach((field) => {
-        output.push(`Number of students in ${field}: ${fields[field].length}. List: ${fields[field].join(', ')}`);
+        const names = fields[field];
+        output.push(`Number of students in ${field}: ${names.length}. List: ${names.join(', ')}`);
       });
 
-      return output;
-    })
-    .catch(() => {
-      throw new Error('Cannot load the database');
+      resolve(output.join('\n'));
     });
+  });
 }
 
-app.get('/', (req, res) => {
-  res.set('Content-Type', 'text/plain');
-  res.send('Hello Holberton School!');
+const app = express();
+
+app.get('/', (request, response) => {
+  response.status(200).type('text').send('Hello Holberton School!');
 });
 
-app.get('/students', async (req, res) => {
-  res.set('Content-Type', 'text/plain');
-
-  if (!database) {
-    res.send('This is the list of our students\nCannot load the database');
-    return;
-  }
-
-  try {
-    const output = await countStudents(database);
-    res.send(`This is the list of our students\n${output.join('\n')}`);
-  } catch (err) {
-    res.send('This is the list of our students\nCannot load the database');
-  }
+app.get('/students', (request, response) => {
+  readDatabase(process.argv[2])
+    .then((report) => {
+      response.status(200).type('text').send(`This is the list of our students\n${report}`);
+    })
+    .catch((error) => {
+      response.status(200).type('text').send(`This is the list of our students\n${error.message}`);
+    });
 });
 
 app.listen(1245);
